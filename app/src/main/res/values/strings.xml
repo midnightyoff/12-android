@@ -3,4 +3,21 @@
     <string name="offline_type" translatable="false">Offline</string>
     <string name="online_type" translatable="false">Online</string>
     <string name="not_implemented">Not implemented</string>
+    <string name="login">Login</string>
+    <string name="login_empty_error">Login cannot be empty</string>
+    <string name="login_too_short_error">Login too short</string>
+    <string name="login_too_long_error">Login too long</string>
+    <string name="password_empty_error">Password cannot be empty</string>
+    <string name="password_too_short_error">Password too short</string>
+    <string name="password_too_long_error">Password too long</string>
+    <string name="name_too_long_error">Name too long</string>
+    <string name="name_empty_error">Name cannot be empty</string>
+    <string name="login_success">Login success!</string>
+    <string name="login_hint">Login</string>
+    <string name="password_hint">Password</string>
+    <string name="show_password_description">Show password</string>
+    <string name="hide_password_description">Hide password</string>
+    <string name="error_mismatch">Mismatch passwords</string>
+    <string name="name_hint">Name</string>
+    <string name="confirm_password_hint">Confirm Password</string>
 </resources>
