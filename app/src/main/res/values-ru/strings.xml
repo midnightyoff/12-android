@@ -2,4 +2,21 @@
 <resources>
     <string name="app_name">Android Школа</string>
     <string name="not_implemented">Не реализовано</string>
+    <string name="login">Войти</string>
+    <string name="login_empty_error">Введите логин</string>
+    <string name="login_too_long_error">Логин слишком длинный</string>
+    <string name="password_empty_error">Введите пароль</string>
+    <string name="password_too_short_error">Пароль слишком короткий</string>
+    <string name="password_too_long_error">Пароль слишком длинный</string>
+    <string name="name_empty_error">Введите имя</string>
+    <string name="login_success">Проверки пройдены!</string>
+    <string name="login_hint">Логин</string>
+    <string name="password_hint">Пароль</string>
+    <string name="show_password_description">Показать пароль</string>
+    <string name="hide_password_description">Скрыть пароль</string>
+    <string name="login_too_short_error">Логин слишком короткий</string>
+    <string name="name_too_long_error">Имя слишком длинное</string>
+    <string name="error_mismatch">Пароли не совпадают</string>
+    <string name="name_hint">Имя</string>
+    <string name="confirm_password_hint">Подвердите пароль</string>
 </resources>
