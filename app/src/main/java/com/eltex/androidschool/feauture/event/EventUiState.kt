@@ -1,6 +1,6 @@
-package com.eltex.androidschool
+package com.eltex.androidschool.feauture.event
 
-data class EventUiModel(
+data class EventUiState(
     val id: Long = 0,
     val author: String = "",
     val published: String = "",
