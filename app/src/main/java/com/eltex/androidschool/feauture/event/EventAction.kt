@@ -1,8 +1,8 @@
 package com.eltex.androidschool.feauture.event
 
 sealed interface EventAction {
-    data object Like : EventAction
-    data object Participate : EventAction
-    data object Share : EventAction
-    data object Menu : EventAction
+    data class Like(val id: Long) : EventAction
+    data class Participate(val id: Long) : EventAction
+    data class Share(val id: Long) : EventAction
+    data class Menu(val id: Long) : EventAction
 }
