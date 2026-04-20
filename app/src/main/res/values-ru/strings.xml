@@ -19,4 +19,6 @@
     <string name="error_mismatch">Пароли не совпадают</string>
     <string name="name_hint">Имя</string>
     <string name="confirm_password_hint">Подвердите пароль</string>
+    <string name="today">Сегодня</string>
+    <string name="yesterday">Вчера</string>
 </resources>

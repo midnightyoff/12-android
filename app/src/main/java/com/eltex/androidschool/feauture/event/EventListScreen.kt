@@ -6,17 +6,26 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.eltex.androidschool.R
 import com.eltex.androidschool.ui.theme.AndroidTheme
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 
 @Composable
@@ -56,8 +65,6 @@ fun EventListScreen(
     contentPadding: PaddingValues = PaddingValues.Zero,
     eventListHandler: (EventAction) -> Unit = {},
 ) {
-
-
     val layoutDirection = LocalLayoutDirection.current
     val combinedPadding = PaddingValues(
         start = contentPadding.calculateStartPadding(layoutDirection) + 8.dp,
@@ -71,13 +78,42 @@ fun EventListScreen(
         contentPadding = combinedPadding,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(state.events, key = { it.id }) { event ->
-            EventCard(
-                event = event,
-                onEvent = eventListHandler
-            )
+        state.groupedEvents.forEach { (headerInstant, eventsInGroup) ->
+            item(
+                key = headerInstant.toEpochMilli(),
+                contentType = "header"
+            ) {
+                DateHeader(headerInstant)
+            }
+
+            items(
+                items = eventsInGroup,
+                key = { it.id },
+                contentType = { "event" }
+            ) { event ->
+                EventCard(
+                    event = event,
+                    onEvent = eventListHandler,
+                    modifier = Modifier.animateItem()
+                )
+            }
         }
     }
+}
+
+@Composable
+fun DateHeader(instant: Instant) {
+    val text = when (val date = instant.atZone(ZoneId.systemDefault()).toLocalDate()) {
+        LocalDate.now() -> stringResource(R.string.today)
+        LocalDate.now().minusDays(1) -> stringResource(R.string.yesterday)
+        else -> DateTimeFormatter.ofPattern("dd MMM yyyy").format(date)
+    }
+
+    Text(
+        text = text,
+        modifier = Modifier.padding(16.dp),
+        fontSize = 20.sp
+        )
 }
 
 @Composable
@@ -90,9 +126,9 @@ fun EventListScreenPreview() {
                     EventUiState(
                         id = 2L,
                         author = "Lydia Westervelt",
-                        published = "11.05.22 11:21",
+                        published = Instant.now(),
                         type = EventType.OFFLINE,
-                        datetime = "16.05.22 12:00",
+                        datetime = Instant.now(),
                         content = "$2: Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
                         link = "https://m2.material.io/components/cards",
                         likes = 2,
@@ -101,9 +137,9 @@ fun EventListScreenPreview() {
                     EventUiState(
                         id = 1L,
                         author = "Lydia Westervelt",
-                        published = "11.05.22 11:21",
+                        published = Instant.now().minusSeconds(24 * 3600L),
                         type = EventType.OFFLINE,
-                        datetime = "16.05.22 12:00",
+                        datetime = Instant.now().minusSeconds(24 * 3600L),
                         content = "$1: Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
                         link = "https://m2.material.io/components/cards",
                         likes = 2,

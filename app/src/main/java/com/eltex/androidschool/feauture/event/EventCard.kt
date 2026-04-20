@@ -1,6 +1,10 @@
 package com.eltex.androidschool.feauture.event
 
 import android.content.res.Configuration
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,8 +28,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -34,6 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eltex.androidschool.R
 import com.eltex.androidschool.ui.theme.AndroidTheme
+import java.time.Instant
 
 @Composable
 fun EventCard(
@@ -41,6 +50,20 @@ fun EventCard(
     modifier: Modifier = Modifier,
     onEvent: (EventAction) -> Unit = {}
 ) {
+    val likeIconColor by animateColorAsState(
+        targetValue = if (event.likedByMe) Color.Red else MaterialTheme.colorScheme.primary,
+    )
+
+    val likeScale by animateFloatAsState(
+        targetValue = if (event.likedByMe) 1.2f else 1.0f,
+        animationSpec = spring(dampingRatio = 0.5f, stiffness = 200f),
+    )
+
+    val participateRotation by animateFloatAsState(
+        targetValue = if (event.participatedByMe) 360f else 0f,
+        animationSpec = tween(durationMillis = 500),
+    )
+
     Card(
         modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.background)
@@ -70,7 +93,7 @@ fun EventCard(
                         fontSize = 16.sp
                     )
                     Text(
-                        text = event.published,
+                        text = event.publishedText,
                         fontWeight = FontWeight.W400,
                         fontSize = 14.sp
                     )
@@ -94,7 +117,7 @@ fun EventCard(
                     fontSize = 16.sp
                 )
                 Text(
-                    text = event.datetime,
+                    text = event.datetimeText,
                     fontSize = 14.sp
                 )
             }
@@ -120,12 +143,12 @@ fun EventCard(
                     .fillMaxWidth()
                     .padding(top = 32.dp, end = 16.dp)
             ) {
-                TextButton({ onEvent(EventAction.Like(event.id)) }) {
+                TextButton({ onEvent(EventAction.Like(event.id)) }, modifier = Modifier.scale(likeScale)) {
                     Icon(
                         if (event.likedByMe) Icons.Default.Favorite
                         else Icons.Default.FavoriteBorder,
                         "Like",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = likeIconColor
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(event.likes.toString(), fontWeight = FontWeight.W500)
@@ -145,7 +168,8 @@ fun EventCard(
                         if (event.participatedByMe) painterResource(R.drawable.ic_participate)
                         else painterResource(R.drawable.ic_participate_outlined),
                         "Participate",
-                        tint = MaterialTheme.colorScheme.primary
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.rotate(participateRotation)
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(event.participants.toString(), fontWeight = FontWeight.W500)
@@ -163,9 +187,9 @@ fun EventCardPreview() {
             EventUiState(
                 id = 1L,
                 author = "Lydia Westervelt",
-                published = "11.05.22 11:21",
+                published = Instant.now(),
                 type = EventType.OFFLINE,
-                datetime = "16.05.22 12:00",
+                datetime = Instant.now(),
                 content = "Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
                 link = "https://m2.material.io/components/cards",
                 likes = 2,
@@ -183,9 +207,9 @@ fun EventCardPreviewDark() {
             EventUiState(
                 id = 1L,
                 author = "Lydia Westervelt",
-                published = "11.05.22 11:21",
+                published = Instant.now(),
                 type = EventType.OFFLINE,
-                datetime = "16.05.22 12:00",
+                datetime = Instant.now(),
                 content = "Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
                 link = "https://m2.material.io/components/cards",
                 likes = 2,

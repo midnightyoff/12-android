@@ -8,11 +8,16 @@ import androidx.lifecycle.ViewModel
 import com.eltex.androidschool.R
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import java.time.Instant
+import java.time.ZoneId
 
 class EventListViewModel : ViewModel() {
+    private val initialEvents = List(10_000, ::createEvent)
+
     var state by mutableStateOf(
         EventListState(
-            List(10_000, ::createEvent)
+            events = initialEvents,
+            groupedEvents = groupByDate(initialEvents)
         )
     )
         private set
@@ -21,56 +26,53 @@ class EventListViewModel : ViewModel() {
 
     fun accept(action: EventAction) {
         when (action) {
-            is EventAction.Like -> {
-                likeById(action.id)
-            }
-
-            is EventAction.Participate -> {
-                participateById(action.id)
-            }
-
-            is EventAction.Share -> {
-                _effects.tryEmit(EventEffect.ShowToast(R.string.not_implemented))
-            }
-
-            is EventAction.Menu -> {
-                _effects.tryEmit(EventEffect.ShowToast(R.string.not_implemented))
-            }
+            is EventAction.Like -> likeById(action.id)
+            is EventAction.Participate -> participateById(action.id)
+            is EventAction.Share -> _effects.tryEmit(EventEffect.ShowToast(R.string.not_implemented))
+            is EventAction.Menu -> _effects.tryEmit(EventEffect.ShowToast(R.string.not_implemented))
         }
     }
 
     private fun likeById(id: Long) {
-        state = state.copy(
-            events = state.events.map { event ->
-                if (event.id == id) {
-                    event.copy(
-                        likes = if (event.likedByMe) event.likes - 1 else event.likes + 1,
-                        likedByMe = !event.likedByMe
-                    )
-                } else event
-            },
-        )
+        updateState(state.events.map {
+            if (it.id == id) it.copy(
+                likes = if (it.likedByMe) it.likes - 1 else it.likes + 1,
+                likedByMe = !it.likedByMe
+            ) else it
+        })
     }
 
     private fun participateById(id: Long) {
+        updateState(state.events.map {
+            if (it.id == id) it.copy(
+                participants = if (it.participatedByMe) it.participants - 1 else it.participants + 1,
+                participatedByMe = !it.participatedByMe
+            ) else it
+        })
+    }
+
+    private fun updateState(newList: List<EventUiState>) {
         state = state.copy(
-            events = state.events.map { event ->
-                if (event.id == id) {
-                    event.copy(
-                        participants = if (event.participatedByMe) event.participants - 1 else event.participants + 1,
-                        participatedByMe = !event.participatedByMe
-                    )
-                } else event
-            },
+            events = newList,
+            groupedEvents = groupByDate(newList)
         )
+    }
+
+    private fun groupByDate(events: List<EventUiState>): Map<Instant, List<EventUiState>> {
+        return events.groupBy {
+            it.published.atZone(ZoneId.systemDefault())
+                .toLocalDate()
+                .atStartOfDay(ZoneId.systemDefault())
+                .toInstant()
+        }
     }
 
     private fun createEvent(id: Int) = EventUiState(
         id = id + 1L,
         author = "Lydia Westervelt",
-        published = "11.05.22 11:21",
+        published = Instant.now().minusSeconds(id / 3 * 24 * 3600L),
         type = EventType.OFFLINE,
-        datetime = "16.05.22 12:00",
+        datetime = Instant.now().minusSeconds(id / 3 * 24 * 3600L),
         content = "$id: Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
         link = "https://m2.material.io/components/cards",
         likes = 2,
