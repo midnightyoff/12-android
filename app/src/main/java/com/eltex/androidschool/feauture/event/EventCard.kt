@@ -1,8 +1,6 @@
 package com.eltex.androidschool.feauture.event
 
-import android.annotation.SuppressLint
 import android.content.res.Configuration
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,43 +24,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.eltex.androidschool.R
 import com.eltex.androidschool.ui.theme.AndroidTheme
-
-@Composable
-fun EventCardRoute(
-    modifier: Modifier = Modifier,
-    viewModel: EventViewModel = viewModel(),
-) {
-    val context = LocalContext.current
-    LaunchedEffect(Unit) {
-        viewModel.effects.collect { effect ->
-            when (effect) {
-                is EventEffect.ShowToast -> {
-                    Toast.makeText(
-                        context,
-                        @SuppressLint("LocalContextGetResourceValueCall")
-                        context.getString(effect.textResId),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            }
-        }
-    }
-
-    EventCard(viewModel.state, modifier, viewModel::accept)
-}
 
 @Composable
 fun EventCard(
@@ -105,7 +76,7 @@ fun EventCard(
                     )
                 }
 
-                IconButton({ onEvent(EventAction.Menu) }, modifier = Modifier.padding(end = 4.dp)) {
+                IconButton({ onEvent(EventAction.Menu(event.id)) }, modifier = Modifier.padding(end = 4.dp)) {
                     Icon(Icons.Default.MoreVert, "More")
                 }
             }
@@ -149,7 +120,7 @@ fun EventCard(
                     .fillMaxWidth()
                     .padding(top = 32.dp, end = 16.dp)
             ) {
-                TextButton({ onEvent(EventAction.Like) }) {
+                TextButton({ onEvent(EventAction.Like(event.id)) }) {
                     Icon(
                         if (event.likedByMe) Icons.Default.Favorite
                         else Icons.Default.FavoriteBorder,
@@ -159,7 +130,7 @@ fun EventCard(
                     Spacer(Modifier.width(8.dp))
                     Text(event.likes.toString(), fontWeight = FontWeight.W500)
                 }
-                IconButton({ onEvent(EventAction.Share) }, modifier = Modifier.padding(end = 8.dp)) {
+                IconButton({ onEvent(EventAction.Share(event.id)) }, modifier = Modifier.padding(end = 8.dp)) {
                     Icon(
                         Icons.Default.Share,
                         "Share",
@@ -169,7 +140,7 @@ fun EventCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                TextButton({ onEvent(EventAction.Participate) }) {
+                TextButton({ onEvent(EventAction.Participate(event.id)) }) {
                     Icon(
                         if (event.participatedByMe) painterResource(R.drawable.ic_participate)
                         else painterResource(R.drawable.ic_participate_outlined),
