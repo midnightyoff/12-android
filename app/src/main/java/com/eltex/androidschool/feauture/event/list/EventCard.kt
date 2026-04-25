@@ -1,4 +1,4 @@
-package com.eltex.androidschool.feauture.event
+package com.eltex.androidschool.feauture.event.list
 
 import android.content.res.Configuration
 import androidx.compose.animation.animateColorAsState
@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -29,6 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -48,7 +53,7 @@ import java.time.Instant
 fun EventCard(
     event: EventUiState,
     modifier: Modifier = Modifier,
-    onEvent: (EventAction) -> Unit = {}
+    onEvent: (EventMessage) -> Unit = {},
 ) {
     val likeIconColor by animateColorAsState(
         targetValue = if (event.likedByMe) Color.Red else MaterialTheme.colorScheme.primary,
@@ -63,6 +68,8 @@ fun EventCard(
         targetValue = if (event.participatedByMe) 360f else 0f,
         animationSpec = tween(durationMillis = 500),
     )
+
+    var expanded by remember { mutableStateOf(false) }
 
     Card(
         modifier.fillMaxWidth(),
@@ -99,8 +106,29 @@ fun EventCard(
                     )
                 }
 
-                IconButton({ onEvent(EventAction.Menu(event.id)) }, modifier = Modifier.padding(end = 4.dp)) {
-                    Icon(Icons.Default.MoreVert, "More")
+                IconButton({
+                    expanded = true
+                }) {
+                    Icon(Icons.Default.MoreVert, null)
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.event_menu_delete)) },
+                            onClick = {
+                                onEvent(EventMessage.Delete(event.id))
+                                expanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.event_menu_edit)) },
+                            onClick = {
+                                onEvent(EventMessage.EditEvent(event))
+                                expanded = false
+                            }
+                        )
+                    }
                 }
             }
 
@@ -143,7 +171,7 @@ fun EventCard(
                     .fillMaxWidth()
                     .padding(top = 32.dp, end = 16.dp)
             ) {
-                TextButton({ onEvent(EventAction.Like(event.id)) }, modifier = Modifier.scale(likeScale)) {
+                TextButton({ onEvent(EventMessage.Like(event.id)) }, modifier = Modifier.scale(likeScale)) {
                     Icon(
                         if (event.likedByMe) Icons.Default.Favorite
                         else Icons.Default.FavoriteBorder,
@@ -153,7 +181,7 @@ fun EventCard(
                     Spacer(Modifier.width(8.dp))
                     Text(event.likes.toString(), fontWeight = FontWeight.W500)
                 }
-                IconButton({ onEvent(EventAction.Share(event.id)) }, modifier = Modifier.padding(end = 8.dp)) {
+                IconButton({ onEvent(EventMessage.Share(event.id)) }, modifier = Modifier.padding(end = 8.dp)) {
                     Icon(
                         Icons.Default.Share,
                         "Share",
@@ -163,7 +191,7 @@ fun EventCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                TextButton({ onEvent(EventAction.Participate(event.id)) }) {
+                TextButton({ onEvent(EventMessage.Participate(event.id)) }) {
                     Icon(
                         if (event.participatedByMe) painterResource(R.drawable.ic_participate)
                         else painterResource(R.drawable.ic_participate_outlined),
@@ -194,7 +222,7 @@ fun EventCardPreview() {
                 link = "https://m2.material.io/components/cards",
                 likes = 2,
                 participants = 2
-            )
+            ),
         )
     }
 }
@@ -214,7 +242,7 @@ fun EventCardPreviewDark() {
                 link = "https://m2.material.io/components/cards",
                 likes = 2,
                 participants = 2
-            )
+            ),
         )
     }
 }

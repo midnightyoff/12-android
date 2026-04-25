@@ -1,4 +1,4 @@
-package com.eltex.androidschool.feauture.event
+package com.eltex.androidschool.feauture.event.list
 
 import androidx.compose.runtime.Immutable
 import java.time.Instant

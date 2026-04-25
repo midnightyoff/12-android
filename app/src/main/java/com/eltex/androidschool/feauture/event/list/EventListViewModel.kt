@@ -1,18 +1,18 @@
-package com.eltex.androidschool.feauture.event
+package com.eltex.androidschool.feauture.event.list
 
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.eltex.androidschool.R
+import com.eltex.androidschool.feauture.event.list.EventEffect.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.time.Instant
 import java.time.ZoneId
 
 class EventListViewModel : ViewModel() {
-    private val initialEvents = List(10_000, ::createEvent)
+    private val initialEvents = List(1, ::createEvent)
 
     var state by mutableStateOf(
         EventListState(
@@ -21,15 +21,22 @@ class EventListViewModel : ViewModel() {
         )
     )
         private set
-    private val _effects = MutableSharedFlow<EventEffect>(extraBufferCapacity = 1)
+    private val _effects = MutableSharedFlow<EventEffect>(extraBufferCapacity = 64)
     val effects = _effects.asSharedFlow()
 
-    fun accept(action: EventAction) {
+    fun accept(action: EventMessage) {
         when (action) {
-            is EventAction.Like -> likeById(action.id)
-            is EventAction.Participate -> participateById(action.id)
-            is EventAction.Share -> _effects.tryEmit(EventEffect.ShowToast(R.string.not_implemented))
-            is EventAction.Menu -> _effects.tryEmit(EventEffect.ShowToast(R.string.not_implemented))
+            is EventMessage.Like -> likeById(action.id)
+            is EventMessage.Participate -> participateById(action.id)
+            is EventMessage.Share -> {
+                val event = state.events.find { it.id == action.id }
+                event?.let {
+                    _effects.tryEmit(Share(it.content))
+                }
+            }
+            is EventMessage.AddEvent -> saveEvent(action.id, action.text)
+            is EventMessage.Delete -> deleteEvent(action.id)
+            is EventMessage.EditEvent -> _effects.tryEmit(EditEvent(action.event))
         }
     }
 
@@ -49,6 +56,33 @@ class EventListViewModel : ViewModel() {
                 participatedByMe = !it.participatedByMe
             ) else it
         })
+    }
+    private fun saveEvent(id: Long, text: String) {
+        if (id == 0L) {
+            addEvent(text)
+        } else {
+            updateState(state.events.map {
+                if (it.id == id) it.copy(content = text) else it
+            })
+        }
+    }
+
+    private fun addEvent(text: String) {
+        updateState(
+            listOf(
+                EventUiState(
+                    id = (state.events.maxByOrNull { it.id }?.id ?: 0) + 1,
+                    content = text,
+                    author = "Me",
+                    published = Instant.now()
+                )
+            ) + state.events
+        )
+        _effects.tryEmit(ScrollTo(0))
+    }
+
+    private fun deleteEvent(id: Long) {
+        updateState(state.events.filter { it.id != id })
     }
 
     private fun updateState(newList: List<EventUiState>) {

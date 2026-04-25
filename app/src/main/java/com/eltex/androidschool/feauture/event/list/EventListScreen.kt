@@ -1,6 +1,7 @@
-package com.eltex.androidschool.feauture.event
+package com.eltex.androidschool.feauture.event.list
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -8,7 +9,9 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -20,7 +23,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import com.eltex.androidschool.Navigation
 import com.eltex.androidschool.R
+import com.eltex.androidschool.feauture.event.NEW_EVENT_RESULT
 import com.eltex.androidschool.ui.theme.AndroidTheme
 import java.time.Instant
 import java.time.LocalDate
@@ -33,9 +40,11 @@ fun EventListScreenRoute(
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     viewModel: EventListViewModel = viewModel(),
+    navController: NavController = rememberNavController(),
+    listState: LazyListState = rememberLazyListState(),
 ) {
     val context = LocalContext.current
-    LaunchedEffect(Unit) {
+    LaunchedEffect(viewModel) {
         viewModel.effects.collect { effect ->
             when (effect) {
                 is EventEffect.ShowToast -> {
@@ -46,12 +55,46 @@ fun EventListScreenRoute(
                         Toast.LENGTH_SHORT
                     ).show()
                 }
+                is EventEffect.ScrollTo -> {
+                    listState.animateScrollToItem(effect.index)
+                }
+
+                is EventEffect.Share -> {
+                    val intent = Intent(Intent.ACTION_SEND).apply {
+                        putExtra(Intent.EXTRA_TEXT, effect.content)
+                        type = "text/plain"
+                    }
+                    val chooser = Intent.createChooser(intent, null)
+                    context.startActivity(chooser)
+                }
+
+                is EventEffect.EditEvent -> {
+                    navController.navigate(
+                        Navigation.AddEvent(
+                            id = effect.event.id,
+                            initialText = effect.event.content
+                        )
+                    )
+                }
             }
         }
     }
 
+    val savedStateHandle = navController.currentBackStackEntry?.savedStateHandle
+
+    LaunchedEffect(savedStateHandle) {
+        savedStateHandle?.getStateFlow<Pair<Long, String>?>(NEW_EVENT_RESULT, null)
+            ?.collect { result ->
+                result?.let { (id, text) ->
+                    viewModel.accept(EventMessage.AddEvent(id, text))
+                }
+                savedStateHandle.remove<Pair<Long, String>?>(NEW_EVENT_RESULT)
+            }
+    }
+
     EventListScreen(
         state = viewModel.state,
+        listState = listState,
         modifier = modifier,
         contentPadding = contentPadding,
         eventListHandler = viewModel::accept
@@ -61,9 +104,10 @@ fun EventListScreenRoute(
 @Composable
 fun EventListScreen(
     state: EventListState,
+    listState: LazyListState,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
-    eventListHandler: (EventAction) -> Unit = {},
+    eventListHandler: (EventMessage) -> Unit = {},
 ) {
     val layoutDirection = LocalLayoutDirection.current
     val combinedPadding = PaddingValues(
@@ -74,6 +118,7 @@ fun EventListScreen(
     )
 
     LazyColumn(
+        state = listState,
         modifier = modifier,
         contentPadding = combinedPadding,
         verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -93,8 +138,8 @@ fun EventListScreen(
             ) { event ->
                 EventCard(
                     event = event,
+                    modifier = Modifier.animateItem(),
                     onEvent = eventListHandler,
-                    modifier = Modifier.animateItem()
                 )
             }
         }
@@ -120,6 +165,7 @@ fun DateHeader(instant: Instant) {
 @Preview(showBackground = true, showSystemUi = true)
 fun EventListScreenPreview() {
     AndroidTheme {
+        val previewListState = rememberLazyListState()
         EventListScreen(
             EventListState(
                 listOf(
@@ -146,7 +192,8 @@ fun EventListScreenPreview() {
                         participants = 2
                     )
                 )
-            )
+            ),
+            listState = previewListState
         )
     }
 }
