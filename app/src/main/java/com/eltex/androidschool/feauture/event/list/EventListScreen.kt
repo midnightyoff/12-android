@@ -28,6 +28,7 @@ import androidx.navigation.compose.rememberNavController
 import com.eltex.androidschool.Navigation
 import com.eltex.androidschool.R
 import com.eltex.androidschool.feauture.event.NEW_EVENT_RESULT
+import com.eltex.androidschool.feauture.event.domain.EventType
 import com.eltex.androidschool.ui.theme.AndroidTheme
 import java.time.Instant
 import java.time.LocalDate

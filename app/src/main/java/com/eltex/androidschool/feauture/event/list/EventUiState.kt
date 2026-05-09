@@ -1,5 +1,7 @@
 package com.eltex.androidschool.feauture.event.list
 
+import com.eltex.androidschool.feauture.event.domain.Event
+import com.eltex.androidschool.feauture.event.domain.EventType
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -16,10 +18,24 @@ data class EventUiState(
     val likes: Int = 0,
     val participatedByMe: Boolean = false,
     val participants: Int = 0,
-)
-
-enum class EventType {
-    OFFLINE, ONLINE
+) {
+    companion object {
+        fun fromEvent(event: Event): EventUiState = with(event) {
+            EventUiState(
+                id = id,
+                author = author,
+                published = published,
+                type = type,
+                datetime = datetime,
+                content = content,
+                link = link,
+                likedByMe = likedByMe,
+                likes = likes,
+                participatedByMe = participatedByMe,
+                participants = participants
+            )
+        }
+    }
 }
 
 private val publishedFormatter = DateTimeFormatter.ofPattern("dd.MM.yy HH:mm")
