@@ -6,8 +6,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.eltex.androidschool.feauture.event.domain.EventRepository
+import com.eltex.androidschool.data.AppDb
 import com.eltex.androidschool.feauture.event.data.EventRepositoryImpl
+import com.eltex.androidschool.feauture.event.domain.EventRepository
 import com.eltex.androidschool.feauture.event.list.EventEffect.*
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -17,7 +18,9 @@ import java.time.Instant
 import java.time.ZoneId
 
 class EventListViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository: EventRepository = EventRepositoryImpl(application)
+    private val repository: EventRepository = EventRepositoryImpl(
+        AppDb.getInstance(application).eventsDao
+    )
     var state by mutableStateOf(EventListState())
         private set
     private val _effects = MutableSharedFlow<EventEffect>(extraBufferCapacity = 64)
@@ -25,7 +28,7 @@ class EventListViewModel(application: Application) : AndroidViewModel(applicatio
 
     init {
         viewModelScope.launch {
-            repository.getEvents().map {
+            repository.events.map {
                 it.map(EventUiState::fromEvent)
             }
                 .collect {
