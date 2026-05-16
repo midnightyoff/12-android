@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.eltex.androidschool.Navigation
 
 @Composable
 fun RegistrationRoute(
@@ -59,7 +60,7 @@ fun RegistrationRoute(
         viewModel.effects.collect { effect ->
             if (effect is RegistrationEffect.Success) {
                 Toast.makeText(context, "Registration Success", Toast.LENGTH_SHORT).show()
-                navController.popBackStack()
+                navController.popBackStack<Navigation.Main>(false)
             }
         }
     }
