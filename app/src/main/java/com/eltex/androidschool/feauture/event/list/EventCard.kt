@@ -46,6 +46,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.eltex.androidschool.R
+import com.eltex.androidschool.feauture.event.domain.EventType
 import com.eltex.androidschool.ui.theme.AndroidTheme
 import java.time.Instant
 
