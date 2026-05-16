@@ -1,4 +1,4 @@
-package com.eltex.androidschool.feauture.event
+package com.eltex.androidschool.feauture.event.list
 
 import java.time.Instant
 import java.time.ZoneId

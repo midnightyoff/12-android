@@ -4,12 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.ui.Modifier
-import com.eltex.androidschool.feauture.event.EventListScreenRoute
-import com.eltex.androidschool.feauture.registration.ui.RegistrationRoute
 import com.eltex.androidschool.ui.theme.AndroidTheme
 
 class MainActivity : ComponentActivity() {
@@ -18,11 +12,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             AndroidTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    EventListScreenRoute(
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                NavigationScreen()
             }
         }
     }

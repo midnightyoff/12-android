@@ -22,4 +22,14 @@
     <string name="confirm_password_hint">Confirm Password</string>
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
+    <string name="tab_posts">Posts</string>
+    <string name="tab_events">Events</string>
+    <string name="tab_users">Users</string>
+    <string name="new_post_title">New post</string>
+    <string name="new_event_title">New event</string>
+    <string name="auth_title">Login</string>
+    <string name="registration_title">Registration</string>
+    <string name="post_menu_delete">Delete</string>
+    <string name="event_menu_delete">Delete</string>
+    <string name="event_menu_edit">Edit</string>
 </resources>

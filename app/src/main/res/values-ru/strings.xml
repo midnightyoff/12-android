@@ -21,4 +21,14 @@
     <string name="confirm_password_hint">Подвердите пароль</string>
     <string name="today">Сегодня</string>
     <string name="yesterday">Вчера</string>
+    <string name="tab_posts">Посты</string>
+    <string name="tab_events">События</string>
+    <string name="tab_users">Пользователи</string>
+    <string name="new_post_title">Новый пост</string>
+    <string name="new_event_title">Новое событие</string>
+    <string name="auth_title">Войти</string>
+    <string name="registration_title">Регистрация</string>
+    <string name="post_menu_delete">Удалить</string>
+    <string name="event_menu_delete">Удалить</string>
+    <string name="event_menu_edit">Изменить</string>
 </resources>
