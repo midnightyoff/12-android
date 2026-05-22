@@ -4,6 +4,6 @@ sealed interface EventEffect {
     data class ShowToast(val textResId: Int) : EventEffect
     data class ScrollTo(val index: Int) : EventEffect
     data class Share(val content: String) : EventEffect
-
-    data class EditEvent(val event: EventUiState) : EventEffect
+    data class EditEvent(val event: EventUiModel) : EventEffect
+    data class Error(val error: Exception) : EventEffect
 }

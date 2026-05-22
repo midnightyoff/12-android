@@ -27,12 +27,13 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.eltex.androidschool.Navigation
 import com.eltex.androidschool.R
+import com.eltex.androidschool.domain.LoadingState
 import com.eltex.androidschool.feauture.event.NEW_EVENT_RESULT
 import com.eltex.androidschool.feauture.event.domain.EventType
+import com.eltex.androidschool.ui.ErrorScreen
+import com.eltex.androidschool.ui.LoadingScreen
 import com.eltex.androidschool.ui.theme.AndroidTheme
-import java.time.Instant
 import java.time.LocalDate
-import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 
@@ -77,6 +78,10 @@ fun EventListScreenRoute(
                         )
                     )
                 }
+
+                is EventEffect.Error -> {
+                    Toast.makeText(context, effect.error.message, Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
@@ -93,13 +98,24 @@ fun EventListScreenRoute(
             }
     }
 
-    EventListScreen(
-        state = viewModel.state,
-        listState = listState,
-        modifier = modifier,
-        contentPadding = contentPadding,
-        eventListHandler = viewModel::accept
-    )
+    when (viewModel.state.status) {
+        is LoadingState.Loading if viewModel.state.events == null ->
+            LoadingScreen(modifier = modifier)
+
+        is LoadingState.Error if viewModel.state.events == null ->
+            ErrorScreen(
+                onRetry = { viewModel.accept(EventMessage.Retry) },
+                modifier = modifier,
+            )
+
+        else -> EventListScreen(
+            state = viewModel.state,
+            listState = listState,
+            modifier = modifier,
+            contentPadding = contentPadding,
+            eventListHandler = viewModel::accept
+        )
+    }
 }
 
 @Composable
@@ -124,12 +140,12 @@ fun EventListScreen(
         contentPadding = combinedPadding,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        state.groupedEvents.forEach { (headerInstant, eventsInGroup) ->
+        state.groupedEvents.forEach { (dateStr, eventsInGroup) ->
             item(
-                key = headerInstant.toEpochMilli(),
+                key = dateStr,
                 contentType = "header"
             ) {
-                DateHeader(headerInstant)
+                DateHeader(dateStr)
             }
 
             items(
@@ -148,8 +164,9 @@ fun EventListScreen(
 }
 
 @Composable
-fun DateHeader(instant: Instant) {
-    val text = when (val date = instant.atZone(ZoneId.systemDefault()).toLocalDate()) {
+fun DateHeader(dateStr: String) {
+    val date = LocalDate.parse(dateStr, DateTimeFormatter.ofPattern("dd.MM.yy"))
+    val text = when (date) {
         LocalDate.now() -> stringResource(R.string.today)
         LocalDate.now().minusDays(1) -> stringResource(R.string.yesterday)
         else -> DateTimeFormatter.ofPattern("dd MMM yyyy").format(date)
@@ -159,7 +176,7 @@ fun DateHeader(instant: Instant) {
         text = text,
         modifier = Modifier.padding(16.dp),
         fontSize = 20.sp
-        )
+    )
 }
 
 @Composable
@@ -170,23 +187,23 @@ fun EventListScreenPreview() {
         EventListScreen(
             EventListState(
                 listOf(
-                    EventUiState(
+                    EventUiModel(
                         id = 2L,
                         author = "Lydia Westervelt",
-                        published = Instant.now(),
+                        published = "23.05.25 12:00",
                         type = EventType.OFFLINE,
-                        datetime = Instant.now(),
+                        datetime = "23.05.25 14:00",
                         content = "$2: Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
                         link = "https://m2.material.io/components/cards",
                         likes = 2,
                         participants = 2
                     ),
-                    EventUiState(
+                    EventUiModel(
                         id = 1L,
                         author = "Lydia Westervelt",
-                        published = Instant.now().minusSeconds(24 * 3600L),
+                        published = "22.05.25 10:00",
                         type = EventType.OFFLINE,
-                        datetime = Instant.now().minusSeconds(24 * 3600L),
+                        datetime = "22.05.25 15:00",
                         content = "$1: Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
                         link = "https://m2.material.io/components/cards",
                         likes = 2,

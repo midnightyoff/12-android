@@ -6,5 +6,6 @@ sealed interface EventMessage {
     data class Share(val id: Long) : EventMessage
     data class AddEvent(val id: Long, val text: String) : EventMessage
     data class Delete(val id: Long) : EventMessage
-    data class EditEvent(val event: EventUiState) : EventMessage
+    data class EditEvent(val event: EventUiModel) : EventMessage
+    data object Retry : EventMessage
 }

@@ -32,4 +32,6 @@
     <string name="post_menu_delete">Delete</string>
     <string name="event_menu_delete">Delete</string>
     <string name="event_menu_edit">Edit</string>
+    <string name="network_error">Network error</string>
+    <string name="retry">Retry</string>
 </resources>
