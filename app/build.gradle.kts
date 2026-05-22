@@ -1,8 +1,9 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.google.ksp)
 }
 
 android {
@@ -13,6 +14,14 @@ android {
         }
     }
 
+    val secretsProperties = rootDir.resolve("secrets.properties")
+        .bufferedReader()
+        .use {
+            Properties().apply {
+                load(it)
+            }
+        }
+
     defaultConfig {
         applicationId = "com.eltex.androidschool"
         minSdk = 24
@@ -21,6 +30,8 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "API_KEY", secretsProperties.getProperty("API_KEY"))
+        buildConfigField("String", "Authorization", secretsProperties.getProperty("Authorization"))
     }
 
     buildTypes {
@@ -39,11 +50,8 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
-}
-
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {
@@ -63,9 +71,8 @@ dependencies {
     implementation(libs.androidx.runtime)
     implementation(libs.kotlinx.serialization.json)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.logging.interceptor)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)

@@ -16,8 +16,7 @@ runtime = "1.11.1"
 runtimeSaveable = "1.11.1"
 runtimeVersion = "1.11.1"
 kotlinxSerializationJson = "1.11.0"
-room = "2.8.4"
-ksp = "2.3.7"
+okhttpBom = "5.3.2"
 
 [libraries]
 androidx-compose-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
@@ -42,13 +41,11 @@ androidx-compose-runtime = { group = "androidx.compose.runtime", name = "runtime
 androidx-compose-runtime-saveable = { group = "androidx.compose.runtime", name = "runtime-saveable", version.ref = "runtimeSaveable" }
 androidx-runtime = { group = "androidx.compose.runtime", name = "runtime", version.ref = "runtimeVersion" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
-androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
-androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
-androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+logging-interceptor={module="com.squareup.okhttp3:logging-interceptor"}
+okhttp-bom={module="com.squareup.okhttp3:okhttp-bom",version.ref="okhttpBom"}
 
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
-google-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
