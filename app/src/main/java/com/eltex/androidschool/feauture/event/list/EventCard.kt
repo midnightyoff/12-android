@@ -48,11 +48,10 @@ import androidx.compose.ui.unit.sp
 import com.eltex.androidschool.R
 import com.eltex.androidschool.feauture.event.domain.EventType
 import com.eltex.androidschool.ui.theme.AndroidTheme
-import java.time.Instant
 
 @Composable
 fun EventCard(
-    event: EventUiState,
+    event: EventUiModel,
     modifier: Modifier = Modifier,
     onEvent: (EventMessage) -> Unit = {},
 ) {
@@ -101,7 +100,7 @@ fun EventCard(
                         fontSize = 16.sp
                     )
                     Text(
-                        text = event.publishedText,
+                        text = event.published,
                         fontWeight = FontWeight.W400,
                         fontSize = 14.sp
                     )
@@ -146,7 +145,7 @@ fun EventCard(
                     fontSize = 16.sp
                 )
                 Text(
-                    text = event.datetimeText,
+                    text = event.datetime,
                     fontSize = 14.sp
                 )
             }
@@ -213,12 +212,12 @@ fun EventCard(
 fun EventCardPreview() {
     AndroidTheme {
         EventCard(
-            EventUiState(
+            EventUiModel(
                 id = 1L,
                 author = "Lydia Westervelt",
-                published = Instant.now(),
+                published = "01.01.25 12:00",
                 type = EventType.OFFLINE,
-                datetime = Instant.now(),
+                datetime = "01.01.25 14:00",
                 content = "Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
                 link = "https://m2.material.io/components/cards",
                 likes = 2,
@@ -233,12 +232,12 @@ fun EventCardPreview() {
 fun EventCardPreviewDark() {
     AndroidTheme {
         EventCard(
-            EventUiState(
+            EventUiModel(
                 id = 1L,
                 author = "Lydia Westervelt",
-                published = Instant.now(),
+                published = "01.01.25 12:00",
                 type = EventType.OFFLINE,
-                datetime = Instant.now(),
+                datetime = "01.01.25 14:00",
                 content = "Приглашаю провести уютный вечер за увлекательными играми! У нас есть несколько вариантов настолок, подходящих для любой компании.",
                 link = "https://m2.material.io/components/cards",
                 likes = 2,
