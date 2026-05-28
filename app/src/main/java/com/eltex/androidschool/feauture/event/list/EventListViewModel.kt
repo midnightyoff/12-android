@@ -1,23 +1,25 @@
 package com.eltex.androidschool.feauture.event.list
 
-import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import com.eltex.androidschool.domain.LoadingState
 import com.eltex.androidschool.feauture.event.data.EventRepositoryImpl
-import com.eltex.androidschool.feauture.event.domain.Callback
-import com.eltex.androidschool.feauture.event.domain.Event
 import com.eltex.androidschool.feauture.event.domain.EventRepository
 import com.eltex.androidschool.feauture.event.list.EventEffect.EditEvent
 import com.eltex.androidschool.feauture.event.list.EventEffect.ScrollTo
 import com.eltex.androidschool.feauture.event.list.EventEffect.Share
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.kotlin.addTo
+import io.reactivex.rxjava3.kotlin.subscribeBy
+import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-class EventListViewModel(application: Application) : AndroidViewModel(application) {
+class EventListViewModel() : ViewModel() {
     private val repository: EventRepository = EventRepositoryImpl()
+    private val disposable = CompositeDisposable()
 
     var state by mutableStateOf(EventListState())
         private set
@@ -48,88 +50,93 @@ class EventListViewModel(application: Application) : AndroidViewModel(applicatio
     private fun like(message: EventMessage.Like) {
         val likedByMe = state.events.orEmpty()
             .find { it.id == message.id }?.likedByMe ?: return
-        repository.likeById(message.id, likedByMe, object : Callback<Event> {
-            override fun onSuccess(value: Event) {
-                val newEvents = state.events.orEmpty().map {
-                    if (it.id == message.id) EventUiModel.fromEvent(value) else it
+        repository.likeById(message.id, likedByMe)
+            .map { event ->
+                state.events.orEmpty().map {
+                    if (it.id == message.id) EventUiModel.fromEvent(event) else it
                 }
-                state = state.copy(events = newEvents, groupedEvents = groupByDate(newEvents))
             }
-
-            override fun onError(error: Exception) {
-                _effects.tryEmit(EventEffect.Error(error))
-            }
-        })
+            .subscribeBy(
+                onSuccess = { events ->
+                    state = state.copy(events = events, groupedEvents = groupByDate(events))
+                },
+                onError = { _effects.tryEmit(EventEffect.Error(it as? Exception ?: RuntimeException(it))) },
+            )
+            .addTo(disposable)
     }
 
     private fun participate(message: EventMessage.Participate) {
         val participatedByMe = state.events.orEmpty()
             .find { it.id == message.id }?.participatedByMe ?: return
-        repository.participateById(message.id, participatedByMe, object : Callback<Event> {
-            override fun onSuccess(value: Event) {
-                val newEvents = state.events.orEmpty().map {
-                    if (it.id == message.id) EventUiModel.fromEvent(value) else it
+        repository.participateById(message.id, participatedByMe)
+            .map { event ->
+                state.events.orEmpty().map {
+                    if (it.id == message.id) EventUiModel.fromEvent(event) else it
                 }
-                state = state.copy(events = newEvents, groupedEvents = groupByDate(newEvents))
             }
-
-            override fun onError(error: Exception) {
-                _effects.tryEmit(EventEffect.Error(error))
-            }
-        })
+            .subscribeBy(
+                onSuccess = { events ->
+                    state = state.copy(events = events, groupedEvents = groupByDate(events))
+                },
+                onError = { _effects.tryEmit(EventEffect.Error(it as? Exception ?: RuntimeException(it))) },
+            )
+            .addTo(disposable)
     }
 
     private fun saveEvent(message: EventMessage.AddEvent) {
-        repository.saveEvent(message.id, message.text, object : Callback<Event> {
-            override fun onSuccess(value: Event) {
-                val saved = EventUiModel.fromEvent(value)
-                val newEvents = if (message.id == 0L) {
+        repository.saveEvent(message.id, message.text)
+            .map { event ->
+                val saved = EventUiModel.fromEvent(event)
+                if (message.id == 0L) {
                     listOf(saved) + state.events.orEmpty()
                 } else {
                     state.events.orEmpty().map { if (it.id == message.id) saved else it }
                 }
-                state = state.copy(events = newEvents, groupedEvents = groupByDate(newEvents))
             }
-
-            override fun onError(error: Exception) {
-                _effects.tryEmit(EventEffect.Error(error))
-            }
-        })
+            .subscribeBy(
+                onSuccess = { events ->
+                    state = state.copy(events = events, groupedEvents = groupByDate(events))
+                },
+                onError = { _effects.tryEmit(EventEffect.Error(it as? Exception ?: RuntimeException(it))) },
+            )
+            .addTo(disposable)
         if (message.id == 0L) {
             _effects.tryEmit(ScrollTo(0))
         }
     }
 
     private fun deleteEvent(message: EventMessage.Delete) {
-        repository.deleteById(message.id, object : Callback<Unit> {
-            override fun onSuccess(value: Unit) {
-                val newEvents = state.events.orEmpty().filter { it.id != message.id }
-                state = state.copy(events = newEvents, groupedEvents = groupByDate(newEvents))
-            }
-
-            override fun onError(error: Exception) {
-                _effects.tryEmit(EventEffect.Error(error))
-            }
-        })
+        repository.deleteById(message.id)
+            .subscribeBy(
+                onComplete = {
+                    val newEvents = state.events.orEmpty().filter { it.id != message.id }
+                    state = state.copy(events = newEvents, groupedEvents = groupByDate(newEvents))
+                },
+                onError = { _effects.tryEmit(EventEffect.Error(it as? Exception ?: RuntimeException(it))) },
+            )
+            .addTo(disposable)
     }
 
     private fun load() {
         state = state.copy(status = LoadingState.Loading)
+        repository.getEvents()
+            .observeOn(Schedulers.computation())
+            .map { events -> events.map(EventUiModel::fromEvent) }
+            .subscribeBy(
+                onSuccess = { events ->
+                    state = state.copy(
+                        events = events,
+                        groupedEvents = groupByDate(events),
+                        status = LoadingState.Idle,
+                    )
+                },
+                onError = { state = state.copy(status = LoadingState.Error(it as? Exception ?: RuntimeException(it))) },
+            )
+            .addTo(disposable)
+    }
 
-        repository.getEvents(object : Callback<List<Event>> {
-            override fun onSuccess(value: List<Event>) {
-                val uiModels = value.map(EventUiModel::fromEvent)
-                state = state.copy(
-                    events = uiModels,
-                    groupedEvents = groupByDate(uiModels),
-                    status = LoadingState.Idle,
-                )
-            }
-
-            override fun onError(error: Exception) {
-                state = state.copy(status = LoadingState.Error(error))
-            }
-        })
+    override fun onCleared() {
+        disposable.dispose()
     }
 
     private fun groupByDate(events: List<EventUiModel>): Map<String, List<EventUiModel>> {
