@@ -1,22 +1,34 @@
 package com.eltex.androidschool.feauture.event.list
 
 import com.eltex.androidschool.domain.LoadingState
-import com.eltex.androidschool.feauture.TrampolineSchedulerProvider
 import com.eltex.androidschool.feauture.event.domain.Event
 import com.eltex.androidschool.feauture.event.domain.EventRepository
-import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Before
 import org.junit.Test
 import java.time.Instant
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class EventListViewModelTest {
+
     private lateinit var viewModel: EventListViewModel
+    private val testDispatcher = UnconfinedTestDispatcher()
+
+    @Before
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
 
     @After
     fun tearDown() {
         viewModel.onCleared()
+        Dispatchers.resetMain()
     }
 
 
@@ -24,9 +36,9 @@ class EventListViewModelTest {
     fun `load success - events are mapped and status becomes Idle`() {
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(event(1L, "First"), event(2L, "Second")))
+                eventsResult = { listOf(event(1L, "First"), event(2L, "Second")) }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         assertEquals(LoadingState.Idle, viewModel.state.status)
@@ -40,9 +52,9 @@ class EventListViewModelTest {
         val error = RuntimeException("network error")
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.error(error)
+                eventsResult = { throw error }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         assertEquals(LoadingState.Error(error), viewModel.state.status)
@@ -54,10 +66,10 @@ class EventListViewModelTest {
         val original = event(1L, likedByMe = false, likes = 5)
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(original))
-                likeResult = Single.just(original.copy(likedByMe = true, likes = 6))
+                eventsResult = { listOf(original) }
+                likeResult = { original.copy(likedByMe = true, likes = 6) }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.Like(id = 1L))
@@ -72,10 +84,10 @@ class EventListViewModelTest {
         val original = event(1L, likedByMe = false, likes = 5)
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(original))
-                likeResult = Single.error(RuntimeException("like failed"))
+                eventsResult = { listOf(original) }
+                likeResult = { throw RuntimeException("like failed") }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.Like(id = 1L))
@@ -91,10 +103,10 @@ class EventListViewModelTest {
         val original = event(1L, participatedByMe = false, participants = 3)
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(original))
-                participateResult = Single.just(original.copy(participatedByMe = true, participants = 4))
+                eventsResult = { listOf(original) }
+                participateResult = { original.copy(participatedByMe = true, participants = 4) }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.Participate(id = 1L))
@@ -109,10 +121,10 @@ class EventListViewModelTest {
         val original = event(1L, participatedByMe = false, participants = 3)
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(original))
-                participateResult = Single.error(RuntimeException("participate failed"))
+                eventsResult = { listOf(original) }
+                participateResult = { throw RuntimeException("participate failed") }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.Participate(id = 1L))
@@ -127,10 +139,10 @@ class EventListViewModelTest {
     fun `saveEvent new - event is prepended to existing list`() {
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(event(1L)))
-                saveResult = Single.just(event(99L, "New"))
+                eventsResult = { listOf(event(1L)) }
+                saveResult = { event(99L, "New") }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.AddEvent(id = 0L, text = "New"))
@@ -144,10 +156,10 @@ class EventListViewModelTest {
         val original = event(1L, "Old content")
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(original))
-                saveResult = Single.just(original.copy(content = "New content"))
+                eventsResult = { listOf(original) }
+                saveResult = { original.copy(content = "New content") }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.AddEvent(id = 1L, text = "New content"))
@@ -160,10 +172,10 @@ class EventListViewModelTest {
     fun `saveEvent error - events in state are unchanged`() {
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(event(1L)))
-                saveResult = Single.error(RuntimeException("save failed"))
+                eventsResult = { listOf(event(1L)) }
+                saveResult = { throw RuntimeException("save failed") }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.AddEvent(id = 0L, text = "content"))
@@ -172,15 +184,14 @@ class EventListViewModelTest {
         assertEquals(1L, viewModel.state.events?.first()?.id)
     }
 
-
     @Test
     fun `deleteEvent success - event is removed from list`() {
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(event(1L), event(2L)))
-                deleteResult = Completable.complete()
+                eventsResult = { listOf(event(1L), event(2L)) }
+                deleteResult = {}
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.Delete(id = 1L))
@@ -192,10 +203,10 @@ class EventListViewModelTest {
     fun `deleteEvent error - events in state are unchanged`() {
         viewModel = EventListViewModel(
             repository = FakeEventRepository().apply {
-                eventsResult = Single.just(listOf(event(1L), event(2L)))
-                deleteResult = Completable.error(RuntimeException("delete failed"))
+                eventsResult = { listOf(event(1L), event(2L)) }
+                deleteResult = { throw RuntimeException("delete failed") }
             },
-            schedulers = TrampolineSchedulerProvider,
+            computationDispatcher = testDispatcher,
         )
 
         viewModel.accept(EventMessage.Delete(id = 1L))
@@ -223,15 +234,15 @@ class EventListViewModelTest {
 }
 
 private class FakeEventRepository : EventRepository {
-    var eventsResult: Single<List<Event>> = Single.just(emptyList())
-    var likeResult: Single<Event> = Single.error(NotImplementedError())
-    var participateResult: Single<Event> = Single.error(NotImplementedError())
-    var saveResult: Single<Event> = Single.error(NotImplementedError())
-    var deleteResult: Completable = Completable.error(NotImplementedError())
+    var eventsResult: suspend () -> List<Event> = { emptyList() }
+    var likeResult: suspend () -> Event = { throw NotImplementedError() }
+    var participateResult: suspend () -> Event = { throw NotImplementedError() }
+    var saveResult: suspend () -> Event = { throw NotImplementedError() }
+    var deleteResult: suspend () -> Unit = { throw NotImplementedError() }
 
-    override fun getEvents(): Single<List<Event>> = eventsResult
-    override fun likeById(id: Long, likedByMe: Boolean): Single<Event> = likeResult
-    override fun participateById(id: Long, participatedByMe: Boolean): Single<Event> = participateResult
-    override fun saveEvent(id: Long, content: String): Single<Event> = saveResult
-    override fun deleteById(id: Long): Completable = deleteResult
+    override suspend fun getEvents(): List<Event> = eventsResult()
+    override suspend fun likeById(id: Long, likedByMe: Boolean): Event = likeResult()
+    override suspend fun participateById(id: Long, participatedByMe: Boolean): Event = participateResult()
+    override suspend fun saveEvent(id: Long, content: String): Event = saveResult()
+    override suspend fun deleteById(id: Long) = deleteResult()
 }

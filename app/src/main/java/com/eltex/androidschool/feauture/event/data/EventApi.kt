@@ -1,8 +1,6 @@
 package com.eltex.androidschool.feauture.event.data
 
 import com.eltex.androidschool.data.RetrofitFactory
-import io.reactivex.rxjava3.core.Completable
-import io.reactivex.rxjava3.core.Single
 import retrofit2.create
 import retrofit2.http.Body
 import retrofit2.http.DELETE
@@ -12,25 +10,25 @@ import retrofit2.http.Path
 
 interface EventApi {
     @GET("events")
-    fun getAll(): Single<List<EventDto>>
+    suspend fun getAll(): List<EventDto>
 
     @POST("events")
-    fun saveEvent(@Body event: EventDto): Single<EventDto>
+    suspend fun saveEvent(@Body event: EventDto): EventDto
 
     @POST("events/{id}/likes")
-    fun likeById(@Path("id") id: Long): Single<EventDto>
+    suspend fun likeById(@Path("id") id: Long): EventDto
 
     @DELETE("events/{id}/likes")
-    fun dislikeById(@Path("id") id: Long): Single<EventDto>
+    suspend fun dislikeById(@Path("id") id: Long): EventDto
 
     @POST("events/{id}/participants")
-    fun participateById(@Path("id") id: Long): Single<EventDto>
+    suspend fun participateById(@Path("id") id: Long): EventDto
 
     @DELETE("events/{id}/participants")
-    fun unparticipateById(@Path("id") id: Long): Single<EventDto>
+    suspend fun unparticipateById(@Path("id") id: Long): EventDto
 
     @DELETE("events/{id}")
-    fun deleteById(@Path("id") id: Long): Completable
+    suspend fun deleteById(@Path("id") id: Long)
 
     companion object {
         val value: EventApi by lazy {
