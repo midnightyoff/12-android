@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.eltex.androidschool.domain.LoadingState
+import com.eltex.androidschool.domain.SchedulerProvider
 import com.eltex.androidschool.feauture.event.data.EventRepositoryImpl
 import com.eltex.androidschool.feauture.event.domain.EventRepository
 import com.eltex.androidschool.feauture.event.list.EventEffect.EditEvent
@@ -13,12 +14,14 @@ import com.eltex.androidschool.feauture.event.list.EventEffect.Share
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.kotlin.addTo
 import io.reactivex.rxjava3.kotlin.subscribeBy
-import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-class EventListViewModel() : ViewModel() {
-    private val repository: EventRepository = EventRepositoryImpl()
+class EventListViewModel(
+    private val repository: EventRepository = EventRepositoryImpl(),
+    private val schedulers: SchedulerProvider = SchedulerProvider
+) : ViewModel() {
+
     private val disposable = CompositeDisposable()
 
     var state by mutableStateOf(EventListState())
@@ -120,8 +123,9 @@ class EventListViewModel() : ViewModel() {
     private fun load() {
         state = state.copy(status = LoadingState.Loading)
         repository.getEvents()
-            .observeOn(Schedulers.computation())
+            .observeOn(schedulers.computation())
             .map { events -> events.map(EventUiModel::fromEvent) }
+            .observeOn(schedulers.mainThread())
             .subscribeBy(
                 onSuccess = { events ->
                     state = state.copy(
@@ -135,7 +139,7 @@ class EventListViewModel() : ViewModel() {
             .addTo(disposable)
     }
 
-    override fun onCleared() {
+    public override fun onCleared() {
         disposable.dispose()
     }
 
