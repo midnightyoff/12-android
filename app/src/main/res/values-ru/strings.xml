@@ -33,4 +33,6 @@
     <string name="event_menu_edit">Изменить</string>
     <string name="network_error">Ошибка сети</string>
     <string name="retry">Повторить</string>
+    <string name="forbidden_error">Запрещено</string>
+    <string name="unknown_error">Неизвестная ошибка</string>
 </resources>

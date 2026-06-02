@@ -34,4 +34,6 @@
     <string name="event_menu_edit">Edit</string>
     <string name="network_error">Network error</string>
     <string name="retry">Retry</string>
+    <string name="forbidden_error">Forbidden</string>
+    <string name="unknown_error">Unknown error</string>
 </resources>

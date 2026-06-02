@@ -1,6 +1,7 @@
 package com.eltex.androidschool.feauture.event.list
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +30,7 @@ import com.eltex.androidschool.Navigation
 import com.eltex.androidschool.R
 import com.eltex.androidschool.domain.LoadingState
 import com.eltex.androidschool.feauture.event.NEW_EVENT_RESULT
+import com.eltex.androidschool.domain.AppException
 import com.eltex.androidschool.feauture.event.domain.EventType
 import com.eltex.androidschool.ui.ErrorScreen
 import com.eltex.androidschool.ui.LoadingScreen
@@ -80,7 +82,12 @@ fun EventListScreenRoute(
                 }
 
                 is EventEffect.Error -> {
-                    Toast.makeText(context, effect.error.message, Toast.LENGTH_SHORT).show()
+                    Toast.makeText(
+                        context,
+                        @SuppressLint("LocalContextGetResourceValueCall")
+                        effect.error.toReadableFormat(context),
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
             }
         }
@@ -106,6 +113,8 @@ fun EventListScreenRoute(
             ErrorScreen(
                 onRetry = { viewModel.accept(EventMessage.Retry) },
                 modifier = modifier,
+                text = (viewModel.state.status as LoadingState.Error).value
+                    .toReadableFormat(context),
             )
 
         else -> EventListScreen(
@@ -161,6 +170,12 @@ fun EventListScreen(
             }
         }
     }
+}
+
+private fun Throwable.toReadableFormat(context: Context): String = when (this) {
+    is AppException.Forbidden -> context.getString(R.string.forbidden_error)
+    is AppException.NetworkException -> context.getString(R.string.network_error)
+    else -> context.getString(R.string.unknown_error)
 }
 
 @Composable

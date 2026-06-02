@@ -1,38 +1,34 @@
 package com.eltex.androidschool.feauture.event.data
 
-import com.eltex.androidschool.data.RetrofitFactory
-import retrofit2.create
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 
-interface EventApi {
-    @GET("events")
-    suspend fun getAll(): List<EventDto>
+object EventApi {
+    suspend fun HttpClient.getAllEvents(): List<EventDto> =
+        get("events").body()
 
-    @POST("events")
-    suspend fun saveEvent(@Body event: EventDto): EventDto
+    suspend fun HttpClient.saveEvent(eventDto: EventDto): EventDto =
+        post("events") {
+            setBody(eventDto)
+        }.body()
 
-    @POST("events/{id}/likes")
-    suspend fun likeById(@Path("id") id: Long): EventDto
+    suspend fun HttpClient.likeEvent(id: Long): EventDto =
+        post("events/$id/likes").body()
 
-    @DELETE("events/{id}/likes")
-    suspend fun dislikeById(@Path("id") id: Long): EventDto
+    suspend fun HttpClient.dislikeEvent(id: Long): EventDto =
+        delete("events/$id/likes").body()
 
-    @POST("events/{id}/participants")
-    suspend fun participateById(@Path("id") id: Long): EventDto
+    suspend fun HttpClient.participateEvent(id: Long): EventDto =
+        post("events/$id/participants").body()
 
-    @DELETE("events/{id}/participants")
-    suspend fun unparticipateById(@Path("id") id: Long): EventDto
+    suspend fun HttpClient.unparticipateEvent(id: Long): EventDto =
+        delete("events/$id/participants").body()
 
-    @DELETE("events/{id}")
-    suspend fun deleteById(@Path("id") id: Long)
-
-    companion object {
-        val value: EventApi by lazy {
-            RetrofitFactory.retrofit.create()
-        }
+    suspend fun HttpClient.deleteEvent(id: Long) {
+        delete("events/$id")
     }
 }

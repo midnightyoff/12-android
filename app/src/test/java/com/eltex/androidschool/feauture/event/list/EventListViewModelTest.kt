@@ -10,6 +10,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import java.time.Instant
@@ -57,7 +58,9 @@ class EventListViewModelTest {
             computationDispatcher = testDispatcher,
         )
 
-        assertEquals(LoadingState.Error(error), viewModel.state.status)
+        val status = viewModel.state.status
+        assertTrue(status is LoadingState.Error)
+        assertEquals("network error", (status as LoadingState.Error).value.message)
     }
 
 
