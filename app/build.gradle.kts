@@ -73,6 +73,7 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
     implementation(platform(libs.okhttp.bom))
     implementation(libs.logging.interceptor)
+    implementation(libs.converter.kotlinx.serialization)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
