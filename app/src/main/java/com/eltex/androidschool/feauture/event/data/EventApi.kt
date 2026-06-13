@@ -1,40 +1,42 @@
 package com.eltex.androidschool.feauture.event.data
 
-import com.eltex.androidschool.data.RetrofitFactory
-import retrofit2.Call
-import retrofit2.create
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.GET
-import retrofit2.http.POST
-import retrofit2.http.Path
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.delete
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 
+object EventApi {
+    suspend fun HttpClient.getLatestEvents(count: Int): List<EventDto> =
+        get("events/latest") {
+            parameter("count", count)
+        }.body()
 
-interface EventApi {
-    @GET("events")
-    fun getAll(): Call<List<EventDto>>
+    suspend fun HttpClient.getEventsBefore(id: Long, count: Int): List<EventDto> =
+        get("events/$id/before") {
+            parameter("count", count)
+        }.body()
 
-    @POST("events")
-    fun saveEvent(@Body event: EventDto): Call<EventDto>
+    suspend fun HttpClient.saveEvent(eventDto: EventDto): EventDto =
+        post("events") {
+            setBody(eventDto)
+        }.body()
 
-    @POST("events/{id}/likes")
-    fun likeById(@Path("id") id: Long): Call<EventDto>
+    suspend fun HttpClient.likeEvent(id: Long): EventDto =
+        post("events/$id/likes").body()
 
-    @DELETE("events/{id}/likes")
-    fun dislikeById(@Path("id") id: Long): Call<EventDto>
+    suspend fun HttpClient.dislikeEvent(id: Long): EventDto =
+        delete("events/$id/likes").body()
 
-    @POST("events/{id}/participants")
-    fun participateById(@Path("id") id: Long): Call<EventDto>
+    suspend fun HttpClient.participateEvent(id: Long): EventDto =
+        post("events/$id/participants").body()
 
-    @DELETE("events/{id}/participants")
-    fun unparticipateById(@Path("id") id: Long): Call<EventDto>
+    suspend fun HttpClient.unparticipateEvent(id: Long): EventDto =
+        delete("events/$id/participants").body()
 
-    @DELETE("events/{id}")
-    fun deleteById(@Path("id") id: Long): Call<Unit>
-
-    companion object {
-        val value: EventApi by lazy {
-            RetrofitFactory.retrofit.create()
-        }
+    suspend fun HttpClient.deleteEvent(id: Long) {
+        delete("events/$id")
     }
 }

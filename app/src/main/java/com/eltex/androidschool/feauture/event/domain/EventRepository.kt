@@ -1,9 +1,10 @@
 package com.eltex.androidschool.feauture.event.domain
 
 interface EventRepository {
-    fun getEvents(callback: Callback<List<Event>>)
-    fun likeById(id: Long, likedByMe: Boolean, callback: Callback<Event>)
-    fun participateById(id: Long, participatedByMe: Boolean, callback: Callback<Event>)
-    fun saveEvent(id: Long, content: String, callback: Callback<Event>)
-    fun deleteById(id: Long, callback: Callback<Unit>)
+    suspend fun getEventsLatest(size: Int): List<Event> = emptyList()
+    suspend fun getEventsBefore(id: Long, size: Int): List<Event> = emptyList()
+    suspend fun likeById(id: Long, likedByMe: Boolean): Event
+    suspend fun participateById(id: Long, participatedByMe: Boolean): Event
+    suspend fun saveEvent(id: Long, content: String): Event
+    suspend fun deleteById(id: Long)
 }

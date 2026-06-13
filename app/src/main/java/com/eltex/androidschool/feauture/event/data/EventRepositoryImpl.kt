@@ -1,104 +1,42 @@
 package com.eltex.androidschool.feauture.event.data
 
-import com.eltex.androidschool.feauture.event.domain.Callback
+import com.eltex.androidschool.data.HttpClientFactory
+import com.eltex.androidschool.feauture.event.data.EventApi.deleteEvent
+import com.eltex.androidschool.feauture.event.data.EventApi.dislikeEvent
+import com.eltex.androidschool.feauture.event.data.EventApi.getEventsBefore
+import com.eltex.androidschool.feauture.event.data.EventApi.getLatestEvents
+import com.eltex.androidschool.feauture.event.data.EventApi.likeEvent
+import com.eltex.androidschool.feauture.event.data.EventApi.participateEvent
+import com.eltex.androidschool.feauture.event.data.EventApi.saveEvent
+import com.eltex.androidschool.feauture.event.data.EventApi.unparticipateEvent
 import com.eltex.androidschool.feauture.event.domain.Event
 import com.eltex.androidschool.feauture.event.domain.EventRepository
-import retrofit2.Call
-import retrofit2.Response
+import io.ktor.client.HttpClient
 
-class EventRepositoryImpl : EventRepository {
-    override fun getEvents(callback: Callback<List<Event>>) {
-        EventApi.value.getAll().enqueue(object : retrofit2.Callback<List<EventDto>> {
-            override fun onResponse(call: Call<List<EventDto>>, response: Response<List<EventDto>>) {
-                if (response.isSuccessful) {
-                    callback.onSuccess(response.body().orEmpty().map(EventDto::toEvent))
-                } else {
-                    callback.onError(RuntimeException(response.errorBody()?.string()))
-                }
-            }
+class EventRepositoryImpl(
+    private val client: HttpClient = HttpClientFactory.client,
+) : EventRepository {
+    override suspend fun getEventsLatest(size: Int): List<Event> = client.getLatestEvents(size)
+        .map(EventDto::toEvent)
 
-            override fun onFailure(call: Call<List<EventDto>>, t: Throwable) {
-                callback.onError(RuntimeException(t))
-            }
-        })
+    override suspend fun getEventsBefore(id: Long, size: Int): List<Event> =
+        client.getEventsBefore(id, size)
+            .map(EventDto::toEvent)
+
+    override suspend fun likeById(id: Long, likedByMe: Boolean): Event {
+        val dto = if (likedByMe) client.dislikeEvent(id) else client.likeEvent(id)
+        return dto.toEvent()
     }
 
-    override fun likeById(id: Long, likedByMe: Boolean, callback: Callback<Event>) {
-        val call = if (likedByMe) EventApi.value.dislikeById(id) else EventApi.value.likeById(id)
-        call.enqueue(object : retrofit2.Callback<EventDto> {
-            override fun onResponse(call: Call<EventDto>, response: Response<EventDto>) {
-                if (response.isSuccessful) {
-                    response.body()?.toEvent()?.let {
-                        callback.onSuccess(it)
-                    } ?: run {
-                        callback.onError(RuntimeException(response.errorBody()?.string()))
-                    }
-                } else {
-                    callback.onError(RuntimeException(response.errorBody()?.string()))
-                }
-            }
-
-            override fun onFailure(call: Call<EventDto>, t: Throwable) {
-                callback.onError(RuntimeException(t))
-            }
-        })
+    override suspend fun participateById(id: Long, participatedByMe: Boolean): Event {
+        val dto = if (participatedByMe) client.unparticipateEvent(id) else client.participateEvent(id)
+        return dto.toEvent()
     }
 
-    override fun participateById(id: Long, participatedByMe: Boolean, callback: Callback<Event>) {
-        val call = if (participatedByMe) EventApi.value.unparticipateById(id) else EventApi.value.participateById(id)
-        call.enqueue(object : retrofit2.Callback<EventDto> {
-            override fun onResponse(call: Call<EventDto>, response: Response<EventDto>) {
-                if (response.isSuccessful) {
-                    response.body()?.toEvent()?.let {
-                        callback.onSuccess(it)
-                    } ?: run {
-                        callback.onError(RuntimeException(response.errorBody()?.string()))
-                    }
-                } else {
-                    callback.onError(RuntimeException(response.errorBody()?.string()))
-                }
-            }
+    override suspend fun saveEvent(id: Long, content: String): Event =
+        client.saveEvent(EventDto(id = id, content = content)).toEvent()
 
-            override fun onFailure(call: Call<EventDto>, t: Throwable) {
-                callback.onError(RuntimeException(t))
-            }
-        })
-    }
-
-    override fun saveEvent(id: Long, content: String, callback: Callback<Event>) {
-        EventApi.value.saveEvent(EventDto(id = id, content = content))
-            .enqueue(object : retrofit2.Callback<EventDto> {
-                override fun onResponse(call: Call<EventDto>, response: Response<EventDto>) {
-                    if (response.isSuccessful) {
-                        response.body()?.toEvent()?.let {
-                            callback.onSuccess(it)
-                        } ?: run {
-                            callback.onError(RuntimeException(response.errorBody()?.string()))
-                        }
-                    } else {
-                        callback.onError(RuntimeException(response.errorBody()?.string()))
-                    }
-                }
-
-                override fun onFailure(call: Call<EventDto>, t: Throwable) {
-                    callback.onError(RuntimeException(t))
-                }
-            })
-    }
-
-    override fun deleteById(id: Long, callback: Callback<Unit>) {
-        EventApi.value.deleteById(id).enqueue(object : retrofit2.Callback<Unit> {
-            override fun onResponse(call: Call<Unit>, response: Response<Unit>) {
-                if (response.isSuccessful) {
-                    callback.onSuccess(Unit)
-                } else {
-                    callback.onError(RuntimeException(response.errorBody()?.string()))
-                }
-            }
-
-            override fun onFailure(call: Call<Unit>, t: Throwable) {
-                callback.onError(RuntimeException(t))
-            }
-        })
+    override suspend fun deleteById(id: Long) {
+        client.deleteEvent(id)
     }
 }

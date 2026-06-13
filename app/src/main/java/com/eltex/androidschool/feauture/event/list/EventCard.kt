@@ -171,7 +171,10 @@ fun EventCard(
                     .fillMaxWidth()
                     .padding(top = 32.dp, end = 16.dp)
             ) {
-                TextButton({ onEvent(EventMessage.Like(event.id)) }, modifier = Modifier.scale(likeScale)) {
+                TextButton(
+                    { onEvent(EventMessage.Like(id = event.id, liked = event.likedByMe)) },
+                    modifier = Modifier.scale(likeScale),
+                ) {
                     Icon(
                         if (event.likedByMe) Icons.Default.Favorite
                         else Icons.Default.FavoriteBorder,
@@ -191,7 +194,14 @@ fun EventCard(
 
                 Spacer(modifier = Modifier.weight(1f))
 
-                TextButton({ onEvent(EventMessage.Participate(event.id)) }) {
+                TextButton({
+                    onEvent(
+                        EventMessage.Participate(
+                            id = event.id,
+                            participated = event.participatedByMe,
+                        )
+                    )
+                }) {
                     Icon(
                         if (event.participatedByMe) painterResource(R.drawable.ic_participate)
                         else painterResource(R.drawable.ic_participate_outlined),
