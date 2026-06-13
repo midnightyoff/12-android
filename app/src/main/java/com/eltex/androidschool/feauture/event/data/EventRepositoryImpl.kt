@@ -3,7 +3,8 @@ package com.eltex.androidschool.feauture.event.data
 import com.eltex.androidschool.data.HttpClientFactory
 import com.eltex.androidschool.feauture.event.data.EventApi.deleteEvent
 import com.eltex.androidschool.feauture.event.data.EventApi.dislikeEvent
-import com.eltex.androidschool.feauture.event.data.EventApi.getAllEvents
+import com.eltex.androidschool.feauture.event.data.EventApi.getEventsBefore
+import com.eltex.androidschool.feauture.event.data.EventApi.getLatestEvents
 import com.eltex.androidschool.feauture.event.data.EventApi.likeEvent
 import com.eltex.androidschool.feauture.event.data.EventApi.participateEvent
 import com.eltex.androidschool.feauture.event.data.EventApi.saveEvent
@@ -15,8 +16,12 @@ import io.ktor.client.HttpClient
 class EventRepositoryImpl(
     private val client: HttpClient = HttpClientFactory.client,
 ) : EventRepository {
-    override suspend fun getEvents(): List<Event> = client.getAllEvents()
+    override suspend fun getEventsLatest(size: Int): List<Event> = client.getLatestEvents(size)
         .map(EventDto::toEvent)
+
+    override suspend fun getEventsBefore(id: Long, size: Int): List<Event> =
+        client.getEventsBefore(id, size)
+            .map(EventDto::toEvent)
 
     override suspend fun likeById(id: Long, likedByMe: Boolean): Event {
         val dto = if (likedByMe) client.dislikeEvent(id) else client.likeEvent(id)

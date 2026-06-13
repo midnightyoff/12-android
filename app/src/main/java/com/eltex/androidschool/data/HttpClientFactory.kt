@@ -13,6 +13,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
+import java.net.UnknownHostException
 import java.nio.channels.UnresolvedAddressException
 
 object HttpClientFactory {
@@ -58,7 +59,8 @@ fun HttpClientConfig<*>.installAppResponseValidator() {
                     }
                 }
 
-                is UnresolvedAddressException -> throw AppException.NetworkException()
+                is UnresolvedAddressException, is UnknownHostException ->
+                    throw AppException.NetworkException()
 
                 else -> throw it
             }

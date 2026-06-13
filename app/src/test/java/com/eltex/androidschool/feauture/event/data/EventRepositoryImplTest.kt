@@ -48,7 +48,7 @@ class EventRepositoryImplTest {
     private val eventsJson = "[$eventJson]"
 
     @Test
-    fun `getEvents - success - returns mapped events`() = runTest {
+    fun `getEventsLatest - success - returns mapped events`() = runTest {
         val mockEngine = MockEngine {
             respond(
                 content = ByteReadChannel(eventsJson),
@@ -58,7 +58,7 @@ class EventRepositoryImplTest {
         }
         val repository = EventRepositoryImpl(client = buildClient(mockEngine))
 
-        val events = repository.getEvents()
+        val events = repository.getEventsLatest(size = 10)
 
         val expected = Event(
             id = 1L,
@@ -77,40 +77,60 @@ class EventRepositoryImplTest {
 
         val request = mockEngine.requestHistory.single()
         assertEquals(HttpMethod.Get, request.method)
-        assertEquals("/api/events", request.url.encodedPath)
+        assertEquals("/api/events/latest", request.url.encodedPath)
+        assertEquals("10", request.url.parameters["count"])
     }
 
     @Test
-    fun `getEvents - 403 response - throws Forbidden`() = runTest {
+    fun `getEventsLatest - 403 response - throws Forbidden`() = runTest {
         val mockEngine = MockEngine { respondError(HttpStatusCode.Forbidden) }
         val repository = EventRepositoryImpl(client = buildClient(mockEngine))
 
-        assertFailsWith<AppException.Forbidden> { repository.getEvents() }
+        assertFailsWith<AppException.Forbidden> { repository.getEventsLatest(size = 10) }
     }
 
     @Test
-    fun `getEvents - 401 response - throws Forbidden`() = runTest {
+    fun `getEventsLatest - 401 response - throws Forbidden`() = runTest {
         val mockEngine = MockEngine { respondError(HttpStatusCode.Unauthorized) }
         val repository = EventRepositoryImpl(client = buildClient(mockEngine))
 
-        assertFailsWith<AppException.Forbidden> { repository.getEvents() }
+        assertFailsWith<AppException.Forbidden> { repository.getEventsLatest(size = 10) }
     }
 
     @Test
-    fun `getEvents - 500 response - throws UnknownException with code`() = runTest {
+    fun `getEventsLatest - 500 response - throws UnknownException with code`() = runTest {
         val mockEngine = MockEngine { respondError(HttpStatusCode.InternalServerError) }
         val repository = EventRepositoryImpl(client = buildClient(mockEngine))
 
-        val error = assertFailsWith<AppException.UnknownException> { repository.getEvents() }
+        val error = assertFailsWith<AppException.UnknownException> { repository.getEventsLatest(size = 10) }
         assertEquals(500, error.code)
     }
 
     @Test
-    fun `getEvents - unresolved address - throws NetworkException`() = runTest {
+    fun `getEventsLatest - unresolved address - throws NetworkException`() = runTest {
         val mockEngine = MockEngine { throw UnresolvedAddressException() }
         val repository = EventRepositoryImpl(client = buildClient(mockEngine))
 
-        assertFailsWith<AppException.NetworkException> { repository.getEvents() }
+        assertFailsWith<AppException.NetworkException> { repository.getEventsLatest(size = 10) }
+    }
+
+    @Test
+    fun `getEventsBefore - success - sends id and count`() = runTest {
+        val mockEngine = MockEngine {
+            respond(
+                content = ByteReadChannel(eventsJson),
+                status = HttpStatusCode.OK,
+                headers = headersOf(HttpHeaders.ContentType, "application/json"),
+            )
+        }
+        val repository = EventRepositoryImpl(client = buildClient(mockEngine))
+
+        repository.getEventsBefore(id = 5L, size = 10)
+
+        val request = mockEngine.requestHistory.single()
+        assertEquals(HttpMethod.Get, request.method)
+        assertEquals("/api/events/5/before", request.url.encodedPath)
+        assertEquals("10", request.url.parameters["count"])
     }
 
     @Test

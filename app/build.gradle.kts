@@ -77,6 +77,7 @@ dependencies {
     implementation(libs.ktor.client.content.negotiation)
     implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.serialization.json)
+    implementation(libs.arrow.core)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.ktor.client.mock)
