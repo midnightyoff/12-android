@@ -120,10 +120,6 @@ class EventListViewModel(
         }
     }
 
-    public override fun onCleared() {
-        super.onCleared()
-    }
-
     private fun groupByDate(events: List<EventUiModel>): Map<String, List<EventUiModel>> {
         return events.groupBy { it.published.take(8) }
     }

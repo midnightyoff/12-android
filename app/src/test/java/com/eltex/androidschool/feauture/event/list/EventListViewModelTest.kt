@@ -5,8 +5,11 @@ import com.eltex.androidschool.feauture.event.domain.Event
 import com.eltex.androidschool.feauture.event.domain.EventRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -28,7 +31,6 @@ class EventListViewModelTest {
 
     @After
     fun tearDown() {
-        viewModel.onCleared()
         Dispatchers.resetMain()
     }
 
@@ -215,6 +217,82 @@ class EventListViewModelTest {
         viewModel.accept(EventMessage.Delete(id = 1L))
 
         assertEquals(listOf(1L, 2L), viewModel.state.events?.map { it.id })
+    }
+
+    @Test
+    fun `share - emits Share effect with content`() = runTest {
+        viewModel = EventListViewModel(
+            repository = FakeEventRepository().apply {
+                eventsResult = { listOf(event(1L, "Hello")) }
+            },
+            computationDispatcher = testDispatcher,
+        )
+        val effects = mutableListOf<EventEffect>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.effects.toList(effects)
+        }
+
+        viewModel.accept(EventMessage.Share(id = 1L))
+
+        assertEquals(listOf(EventEffect.Share("Hello")), effects)
+    }
+
+    @Test
+    fun `editEvent - emits EditEvent effect with event`() = runTest {
+        viewModel = EventListViewModel(
+            repository = FakeEventRepository().apply {
+                eventsResult = { listOf(event(1L)) }
+            },
+            computationDispatcher = testDispatcher,
+        )
+        val effects = mutableListOf<EventEffect>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.effects.toList(effects)
+        }
+
+        val edited = EventUiModel(id = 1L, content = "edit me")
+        viewModel.accept(EventMessage.EditEvent(event = edited))
+
+        assertEquals(listOf(EventEffect.EditEvent(edited)), effects)
+    }
+
+    @Test
+    fun `saveEvent new - emits ScrollTo top`() = runTest {
+        viewModel = EventListViewModel(
+            repository = FakeEventRepository().apply {
+                eventsResult = { listOf(event(1L)) }
+                saveResult = { event(99L, "New") }
+            },
+            computationDispatcher = testDispatcher,
+        )
+        val effects = mutableListOf<EventEffect>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.effects.toList(effects)
+        }
+
+        viewModel.accept(EventMessage.AddEvent(id = 0L, text = "New"))
+
+        assertEquals(listOf(EventEffect.ScrollTo(0)), effects)
+    }
+
+    @Test
+    fun `like error - emits Error effect`() = runTest {
+        val error = RuntimeException("like failed")
+        viewModel = EventListViewModel(
+            repository = FakeEventRepository().apply {
+                eventsResult = { listOf(event(1L, likedByMe = false)) }
+                likeResult = { throw error }
+            },
+            computationDispatcher = testDispatcher,
+        )
+        val effects = mutableListOf<EventEffect>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) {
+            viewModel.effects.toList(effects)
+        }
+
+        viewModel.accept(EventMessage.Like(id = 1L))
+
+        assertEquals(listOf(EventEffect.Error(error)), effects)
     }
 
     private fun event(
